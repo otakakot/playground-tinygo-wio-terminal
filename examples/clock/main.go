@@ -21,11 +21,10 @@ var (
 	pass string
 )
 
-const NTP_PACKET_SIZE = 48
-
-const seventyYears = 2208988800
-
-var jst = time.FixedZone("Asia/Tokyo", 9*60*60)
+const (
+	NTPPacketSize = 48
+	SeventyYears  = 2208988800
+)
 
 var (
 	black = color.RGBA{0, 0, 0, 255}
@@ -68,26 +67,28 @@ func main() {
 		panic(err)
 	}
 
-	res := make([]byte, NTP_PACKET_SIZE)
+	res := make([]byte, NTPPacketSize)
 
 	n, err := conn.Read(res)
 	if err != nil && err != io.EOF {
 		panic(err)
 	}
 
-	if n != NTP_PACKET_SIZE {
+	if n != NTPPacketSize {
 		panic("short read")
 	}
 
 	t := uint32(res[40])<<24 | uint32(res[41])<<16 | uint32(res[42])<<8 | uint32(res[43])
 
-	tm := time.Unix(int64(t-seventyYears), 0)
+	tm := time.Unix(int64(t-SeventyYears), 0)
 
 	conn.Close()
 
 	link.NetDisconnect()
 
 	runtime.AdjustTimeOffset(-1 * int64(time.Since(tm)))
+
+	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
 
 	for {
 		now := time.Now().In(jst).Format("03:04:05")
